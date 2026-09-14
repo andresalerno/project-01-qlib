@@ -168,7 +168,8 @@ class EnhancedIndexingOptimizer(BaseOptimizer):
         try:
             prob = cp.Problem(obj, cons + t_cons)
             prob.solve(solver=cp.ECOS, warm_start=True, **self.solver_kwargs)
-            assert prob.status == "optimal"
+            if prob.status != "optimal":
+                raise RuntimeError(f"optimization did not converge (status: {prob.status})")
             success = True
         except Exception as e:
             logger.warning(f"trial 1 failed {e} (status: {prob.status})")
@@ -180,7 +181,8 @@ class EnhancedIndexingOptimizer(BaseOptimizer):
                 w.value = wb
                 prob = cp.Problem(obj, cons)
                 prob.solve(solver=cp.ECOS, warm_start=True, **self.solver_kwargs)
-                assert prob.status in ["optimal", "optimal_inaccurate"]
+                if prob.status not in ["optimal", "optimal_inaccurate"]:
+                    raise RuntimeError(f"optimization did not converge (status: {prob.status})")
                 success = True
             except Exception as e:
                 logger.warning(f"trial 2 failed {e} (status: {prob.status})")
